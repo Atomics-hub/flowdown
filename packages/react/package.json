@@ -1,0 +1,53 @@
+{
+  "name": "@flowdown/react",
+  "version": "0.1.0",
+  "description": "React wrapper for Flowdown — O(1) streaming markdown renderer",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "markdown",
+    "streaming",
+    "react",
+    "llm",
+    "ai",
+    "chat",
+    "react-markdown",
+    "streaming-markdown"
+  ],
+  "license": "MIT",
+  "author": "Tom",
+  "homepage": "https://github.com/Atomics-hub/flowdown#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Atomics-hub/flowdown"
+  },
+  "bugs": {
+    "url": "https://github.com/Atomics-hub/flowdown/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "flowdown": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

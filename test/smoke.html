@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flowdown Smoke Test</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    #output { border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-height: 200px; }
+    #output pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 6px; overflow-x: auto; }
+    #output code { font-family: 'SF Mono', Menlo, monospace; font-size: 14px; }
+    #output :not(pre) > code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    #output table { border-collapse: collapse; width: 100%; }
+    #output th, #output td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+    #output th { background: #f5f5f5; }
+    #output blockquote { border-left: 3px solid #ddd; margin-left: 0; padding-left: 16px; color: #666; }
+    #output a { color: #0066cc; }
+    #output img { max-width: 100%; }
+    button { margin: 10px 5px; padding: 8px 16px; cursor: pointer; border-radius: 6px; border: 1px solid #ccc; background: white; }
+    button:hover { background: #f5f5f5; }
+    #metrics { font-size: 13px; color: #666; margin-top: 10px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>Flowdown Smoke Test</h1>
+  <button onclick="runStreamTest()">Stream Test</button>
+  <button onclick="runInstantTest()">Instant Test</button>
+  <button onclick="resetOutput()">Reset</button>
+  <div id="metrics"></div>
+  <div id="output"></div>
+
+  <script type="module">
+    import { Flowdown } from '../packages/core/dist/index.js';
+
+    const SAMPLE = `# Flowdown Demo
+
+This is a **streaming markdown** renderer built for the *AI era*. It processes tokens **incrementally** — no re-parsing, no virtual DOM, no jank.
+
+## Features
+
+- **O(1) per token** — only processes new characters
+- Zero dependencies — the entire library is ~8KB gzipped
+- Works with any framework — or no framework at all
+- Built-in ~~slow rendering~~ **XSS sanitization**
+
+## Code Example
+
+\`\`\`typescript
+import { Flowdown } from 'flowdown';
+
+const renderer = new Flowdown({
+  container: document.getElementById('output')!,
+  highlight: (code, lang) => hljs.highlight(code, { language: lang }).value,
+});
+
+// Stream tokens as they arrive from the LLM
+for await (const chunk of stream) {
+  renderer.push(chunk);
+}
+renderer.end();
+\`\`\`
+
+## Why Not react-markdown?
+
+Every AI chat app using \`react-markdown\` re-parses the **entire conversation** on every token. That's O(n²). For a 10,000 token response, that's 50 million characters parsed.
+
+> Flowdown processes each token exactly once. That's O(n). The difference isn't subtle — it's the difference between smooth 60fps and a frozen browser tab.
+
+## Performance Comparison
+
+| Library | Parse Strategy | Complexity | Bundle Size |
+|---------|---------------|------------|-------------|
+| react-markdown | Full re-parse | O(n²) | ~60KB |
+| Streamdown | Partial re-parse | O(n log n) | ~40KB |
+| **Flowdown** | **Incremental** | **O(n)** | **~8KB** |
+
+### Links and Images
+
+Check out the [GitHub repo](https://github.com/example/flowdown) for more details.
+
+Here's a horizontal rule:
+
+---
+
+And an ordered list:
+
+1. First item with \`inline code\`
+2. Second item with **bold** and *italic*
+3. Third item
+
+That's it. Ship it.`;
+
+    window.flowdown = null;
+
+    function createRenderer() {
+      const container = document.getElementById('output');
+      if (window.flowdown) window.flowdown.destroy();
+      window.flowdown = new Flowdown({ container, sanitize: true });
+      return window.flowdown;
+    }
+
+    window.runStreamTest = async function() {
+      const renderer = createRenderer();
+      const metrics = document.getElementById('metrics');
+      const tokens = [];
+
+      // Simulate LLM tokenization — split into variable-length chunks
+      let i = 0;
+      while (i < SAMPLE.length) {
+        const len = Math.floor(Math.random() * 8) + 1;
+        tokens.push(SAMPLE.slice(i, i + len));
+        i += len;
+      }
+
+      const start = performance.now();
+      let tokenCount = 0;
+
+      for (const token of tokens) {
+        renderer.push(token);
+        tokenCount++;
+        if (tokenCount % 5 === 0) {
+          await new Promise(r => setTimeout(r, 10));
+          const elapsed = performance.now() - start;
+          metrics.textContent = `Tokens: ${tokenCount}/${tokens.length} | Elapsed: ${elapsed.toFixed(0)}ms | Avg: ${(elapsed / tokenCount).toFixed(2)}ms/token`;
+        }
+      }
+
+      renderer.end();
+      const total = performance.now() - start;
+      metrics.textContent = `Done! ${tokens.length} tokens in ${total.toFixed(0)}ms | Avg: ${(total / tokens.length).toFixed(2)}ms/token (includes simulated delay)`;
+    };
+
+    window.runInstantTest = function() {
+      const renderer = createRenderer();
+      const start = performance.now();
+      renderer.push(SAMPLE);
+      renderer.end();
+      const total = performance.now() - start;
+      document.getElementById('metrics').textContent = `Instant render: ${total.toFixed(2)}ms for ${SAMPLE.length} chars`;
+    };
+
+    window.resetOutput = function() {
+      if (window.flowdown) window.flowdown.destroy();
+      document.getElementById('output').innerHTML = '';
+      document.getElementById('metrics').textContent = '';
+    };
+  </script>
+</body>
+</html>

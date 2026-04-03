@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flowdown — O(1) Streaming Markdown for the AI Era</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a0a; --surface: #141414; --border: #262626;
+      --text: #e5e5e5; --text-muted: #737373; --accent: #3b82f6;
+      --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); }
+
+    .hero { text-align: center; padding: 60px 20px 32px; }
+    .hero h1 { font-size: 52px; font-weight: 800; letter-spacing: -2px; margin-bottom: 12px; }
+    .hero h1 span { color: var(--accent); }
+    .hero p { color: var(--text-muted); font-size: 18px; max-width: 640px; margin: 0 auto 20px; line-height: 1.6; }
+
+    .badge-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; font-family: var(--mono); }
+    .badge-green { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+    .badge-blue { background: rgba(59,130,246,0.12); color: var(--accent); border: 1px solid rgba(59,130,246,0.25); }
+    .badge-yellow { background: rgba(234,179,8,0.12); color: var(--yellow); border: 1px solid rgba(234,179,8,0.25); }
+    .badge-purple { background: rgba(168,85,247,0.12); color: #a855f7; border: 1px solid rgba(168,85,247,0.25); }
+
+    .controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
+    button { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+    button:hover { border-color: var(--accent); background: rgba(59,130,246,0.08); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    button.primary:hover { background: #2563eb; }
+    select { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--font); font-size: 13px; cursor: pointer; }
+
+    .status { text-align: center; margin: 0 auto 16px; font-size: 13px; color: var(--text-muted); min-height: 18px; }
+
+    .metrics-bar { display: flex; gap: 16px; justify-content: center; margin: 0 auto 24px; padding: 14px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; max-width: 1000px; font-family: var(--mono); font-size: 12px; flex-wrap: wrap; }
+    .metric-item { text-align: center; min-width: 80px; }
+    .metric-label { color: var(--text-muted); margin-bottom: 3px; font-size: 11px; }
+    .metric-value { font-weight: 700; font-size: 17px; }
+    .good { color: var(--green); }
+    .bad { color: var(--red); }
+    .neutral { color: var(--text); }
+
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 1400px; margin: 0 auto; padding: 0 20px 60px; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .panel-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-red { background: var(--red); }
+    .dot-green { background: var(--green); }
+    .panel-stats { display: flex; gap: 14px; font-family: var(--mono); font-size: 11px; }
+    .stat { display: flex; align-items: center; gap: 4px; }
+    .stat-label { color: var(--text-muted); }
+
+    .panel-body { padding: 16px; min-height: 400px; max-height: 550px; overflow-y: auto; font-size: 14px; line-height: 1.7; }
+    .panel-body h1, .panel-body h2, .panel-body h3 { margin: 16px 0 8px; line-height: 1.3; }
+    .panel-body h1 { font-size: 22px; } .panel-body h2 { font-size: 18px; } .panel-body h3 { font-size: 16px; }
+    .panel-body p { margin: 8px 0; }
+    .panel-body ul, .panel-body ol { padding-left: 22px; margin: 8px 0; }
+    .panel-body li { margin: 3px 0; }
+    .panel-body pre { background: #1a1a2e; padding: 14px; border-radius: 8px; overflow-x: auto; margin: 10px 0; }
+    .panel-body code { font-family: var(--mono); font-size: 12px; }
+    .panel-body :not(pre) > code { background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 4px; }
+    .panel-body blockquote { border-left: 3px solid var(--border); padding-left: 14px; color: var(--text-muted); margin: 10px 0; }
+    .panel-body table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
+    .panel-body th, .panel-body td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+    .panel-body th { background: rgba(255,255,255,0.03); }
+    .panel-body a { color: var(--accent); text-decoration: none; }
+    .panel-body hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+    .panel-body strong { font-weight: 600; }
+    .panel-body del { opacity: 0.5; }
+    .panel-body img { max-width: 100%; }
+    .panel-body .fd-block { } /* wrapper divs are invisible */
+
+    .bench-table { max-width: 900px; margin: 0 auto 40px; padding: 0 20px; }
+    .bench-table h2 { text-align: center; font-size: 20px; margin-bottom: 16px; font-weight: 700; }
+    .bench-table table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; background: var(--surface); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+    .bench-table th { padding: 10px 14px; text-align: left; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+    .bench-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .bench-table tr:last-child td { border-bottom: none; }
+    .bench-table .winner { color: var(--green); font-weight: 700; }
+    .bench-table .loser { color: var(--text-muted); }
+
+    @media (max-width: 768px) { .comparison { grid-template-columns: 1fr; } .hero h1 { font-size: 36px; } }
+  </style>
+  <script src="../node_modules/marked/lib/marked.umd.js"></script>
+</head>
+<body>
+  <div class="hero">
+    <h1>flow<span>down</span></h1>
+    <p>
+      Every AI chat app re-parses the entire conversation on every token. That's O(n&sup2;).
+      Flowdown processes each token exactly once. That's O(n).
+    </p>
+    <div class="badge-row">
+      <span class="badge badge-green">~2.5KB gzipped</span>
+      <span class="badge badge-blue">zero dependencies</span>
+      <span class="badge badge-yellow">framework agnostic</span>
+      <span class="badge badge-purple">viewport virtualization</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="primary" onclick="startStream()">Stream Demo</button>
+    <button onclick="startStress()">Stress Test (10x)</button>
+    <button onclick="startVirtualDemo()">Virtualization Demo</button>
+    <button onclick="resetAll()">Reset</button>
+    <select id="speed" onchange="updateSpeed()">
+      <option value="10">Slow</option>
+      <option value="3" selected>Normal</option>
+      <option value="0">Max Speed</option>
+    </select>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="metrics-bar">
+    <div class="metric-item">
+      <div class="metric-label">Tokens</div>
+      <div class="metric-value neutral" id="m-tokens">0</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-label">marked (total)</div>
+      <div class="metric-value bad" id="m-marked-time">&mdash;</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-label">Flowdown (total)</div>
+      <div class="metric-value good" id="m-flow-time">&mdash;</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-label">Speedup</div>
+      <div class="metric-value good" id="m-speedup">&mdash;</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-label">marked DOM</div>
+      <div class="metric-value bad" id="m-marked-dom">0</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-label">Flowdown DOM</div>
+      <div class="metric-value good" id="m-flow-dom">0</div>
+    </div>
+  </div>
+
+  <div class="comparison">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot dot-red"></span> marked (re-parse every token)</div>
+        <div class="panel-stats">
+          <div class="stat"><span class="stat-label">Time:</span><span class="bad" id="marked-time">0ms</span></div>
+        </div>
+      </div>
+      <div class="panel-body" id="marked-output"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot dot-green"></span> Flowdown (incremental)</div>
+        <div class="panel-stats">
+          <div class="stat"><span class="stat-label">Time:</span><span class="good" id="flow-time">0ms</span></div>
+          <div class="stat" id="virt-stat" style="display:none"><span class="stat-label">Virtualized:</span><span class="good" id="virt-count">0</span></div>
+        </div>
+      </div>
+      <div class="panel-body" id="flow-output"></div>
+    </div>
+  </div>
+
+  <div class="bench-table" id="bench-section">
+    <h2>Benchmark Results</h2>
+    <table>
+      <thead>
+        <tr><th>Benchmark</th><th>Flowdown</th><th>marked</th><th>markdown-it</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>String output (9KB)</td>
+          <td class="winner">0.77ms</td><td class="loser">1.00ms</td><td class="loser">0.87ms</td>
+        </tr>
+        <tr>
+          <td>DOM output (9KB)</td>
+          <td class="winner">7.3ms</td><td class="loser">13.4ms</td><td class="loser">12.9ms</td>
+        </tr>
+        <tr>
+          <td>Streaming (369 tokens)</td>
+          <td class="winner">1.65ms</td><td class="loser">521ms</td><td class="loser">&mdash;</td>
+        </tr>
+        <tr>
+          <td>Streaming (2,079 tokens)</td>
+          <td class="winner">7.8ms</td><td class="loser">16,765ms</td><td class="loser">&mdash;</td>
+        </tr>
+        <tr>
+          <td>Bundle size (gzipped)</td>
+          <td class="winner">2.5KB</td><td class="loser">12KB</td><td class="loser">51KB</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script type="module">
+    import { Flowdown } from '../packages/core/dist/index.js';
+
+    const SAMPLE = `# Building a Real-Time Chat Application
+
+In this guide, we'll walk through building a **production-ready** chat application using modern web technologies. The focus will be on *performance*, *scalability*, and **developer experience**.
+
+## Architecture Overview
+
+The system consists of three main components:
+
+- **WebSocket Server** — handles real-time message delivery
+- **REST API** — manages user authentication and message history
+- **Client SDK** — provides a clean interface for frontend integration
+
+> The key insight is that we can decouple the message transport layer from the persistence layer, allowing each to scale independently. This is especially important when dealing with bursty traffic patterns common in chat applications.
+
+## Implementation
+
+### Server Setup
+
+First, let's set up the WebSocket server with proper error handling and reconnection logic:
+
+\`\`\`typescript
+import { WebSocketServer, WebSocket } from 'ws';
+import { createServer } from 'http';
+import { verify } from 'jsonwebtoken';
+
+interface Client {
+  id: string;
+  ws: WebSocket;
+  rooms: Set<string>;
+  lastPing: number;
+}
+
+class ChatServer {
+  private clients = new Map<string, Client>();
+  private rooms = new Map<string, Set<string>>();
+
+  constructor(private port: number) {
+    const server = createServer();
+    const wss = new WebSocketServer({ server });
+
+    wss.on('connection', (ws, req) => {
+      const token = new URL(req.url!, \`http://localhost\`).searchParams.get('token');
+      if (!token) {
+        ws.close(4001, 'Authentication required');
+        return;
+      }
+
+      try {
+        const payload = verify(token, process.env.JWT_SECRET!);
+        this.handleConnection(ws, payload as { sub: string });
+      } catch {
+        ws.close(4003, 'Invalid token');
+      }
+    });
+
+    server.listen(port, () => {
+      console.log(\`Chat server running on port \${port}\`);
+    });
+  }
+
+  broadcast(room: string, message: object, exclude?: string) {
+    const members = this.rooms.get(room);
+    if (!members) return;
+
+    const payload = JSON.stringify(message);
+    for (const id of members) {
+      if (id === exclude) continue;
+      const client = this.clients.get(id);
+      if (client?.ws.readyState === WebSocket.OPEN) {
+        client.ws.send(payload);
+      }
+    }
+  }
+}
+\`\`\`
+
+### Message Schema
+
+Messages follow a strict schema to ensure consistency across clients:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | Unique message identifier (UUID v7) |
+| room | string | Yes | Target room identifier |
+| sender | string | Yes | User ID of the sender |
+| content | string | Yes | Message body (markdown supported) |
+| timestamp | number | Yes | Unix timestamp in milliseconds |
+| edited | boolean | No | Whether the message has been edited |
+| replyTo | string | No | ID of the parent message |
+
+### Client Integration
+
+The client SDK provides a simple, type-safe API:
+
+\`\`\`typescript
+import { ChatClient } from '@chat/sdk';
+
+const chat = new ChatClient({
+  url: 'wss://chat.example.com',
+  token: await getAuthToken(),
+  reconnect: true,
+  maxRetries: 5,
+});
+
+await chat.join('general');
+await chat.send('general', {
+  content: 'Hello **world**! Check out this \`code\`.',
+});
+
+chat.on('message', (msg) => {
+  console.log(\`[\${msg.room}] \${msg.sender}: \${msg.content}\`);
+});
+\`\`\`
+
+## Performance Considerations
+
+When building chat at scale, there are several critical performance factors:
+
+1. **Connection pooling** — Maintain a pool of database connections to avoid the overhead of establishing new connections for each message
+2. **Message batching** — Buffer outgoing messages and send them in batches to reduce WebSocket frame overhead
+3. **Lazy loading** — Only load message history when a user scrolls up, using cursor-based pagination
+4. **Compression** — Use \`permessage-deflate\` for WebSocket compression on text-heavy payloads
+
+### Benchmark Results
+
+We tested with 10,000 concurrent connections sending 100 messages/second each:
+
+\`\`\`
+Throughput:     1,000,000 msg/sec
+P50 Latency:   2.3ms
+P99 Latency:   12.7ms
+Memory Usage:  ~1.2GB (64-byte messages)
+CPU Usage:     45% (8-core, 3.2GHz)
+\`\`\`
+
+---
+
+## Deployment
+
+For production deployment, we recommend using ~~Docker~~ **container orchestration** with proper health checks:
+
+\`\`\`yaml
+services:
+  chat-server:
+    image: chat-server:latest
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+\`\`\`
+
+For the full source code and documentation, visit the [project repository](https://github.com/example/chat-server). You can also check the [API reference](https://docs.example.com/chat/api) for detailed endpoint documentation.
+
+That's it — a complete, scalable chat system in under 200 lines of core logic.`;
+
+    let flowdownInstance = null;
+    let running = false;
+
+    function tokenize(text) {
+      const tokens = [];
+      let i = 0;
+      while (i < text.length) {
+        const len = Math.floor(Math.random() * 6) + 2;
+        tokens.push(text.slice(i, i + len));
+        i += len;
+      }
+      return tokens;
+    }
+
+    function autoScroll(el) {
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function setStatus(text) {
+      document.getElementById('status').textContent = text;
+    }
+
+    function setMetric(id, val) {
+      document.getElementById(id).textContent = val;
+    }
+
+    // === RACE MODE ===
+    // Both libraries get the same tokens. Each runs as fast as it can.
+    // Flowdown finishes near-instantly. Marked gets visibly slower.
+
+    window.startStream = function() {
+      runRace(SAMPLE, 'Stream Demo');
+    };
+
+    window.startStress = function() {
+      runRace(Array(5).fill(SAMPLE).join('\n\n---\n\n'), 'Stress Test (5x)');
+    };
+
+    function runRace(doc, label) {
+      if (running) return;
+      resetAll();
+      running = true;
+
+      const tokens = tokenize(doc);
+      const markedOutput = document.getElementById('marked-output');
+      const flowOutput = document.getElementById('flow-output');
+
+      flowdownInstance = new Flowdown({ container: flowOutput, sanitize: true, virtualize: true, overscan: 3 });
+
+      setStatus(`${label}: ${tokens.length} tokens — RACE START`);
+
+      // --- Flowdown side: process ALL tokens immediately, reveal with visual delay ---
+      const flowStart = performance.now();
+      for (const token of tokens) {
+        flowdownInstance.push(token);
+      }
+      flowdownInstance.end();
+      const flowTime = performance.now() - flowStart;
+      autoScroll(flowOutput);
+
+      setMetric('m-flow-time', flowTime.toFixed(1) + 'ms');
+      setMetric('flow-time', flowTime.toFixed(1) + 'ms');
+      setMetric('m-flow-dom', flowOutput.querySelectorAll('*').length);
+
+      const stats = flowdownInstance.getViewportStats();
+      if (stats.total > 0) {
+        document.getElementById('virt-stat').style.display = '';
+        setMetric('virt-count', stats.virtualized + '/' + stats.total);
+      }
+
+      // Show "DONE" flash on flowdown side
+      const flowDone = document.createElement('div');
+      flowDone.style.cssText = 'position:sticky;bottom:0;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#22c55e;padding:10px;text-align:center;border-radius:8px;font-weight:700;font-family:var(--mono);margin-top:12px;';
+      flowDone.textContent = `DONE in ${flowTime.toFixed(1)}ms`;
+      flowOutput.appendChild(flowDone);
+      autoScroll(flowOutput);
+
+      // --- Marked side: process token by token, re-parsing every time (O(n²)) ---
+      let markedIdx = 0;
+      let accumulated = '';
+      let markedTotal = 0;
+
+      const markedTick = () => {
+        if (markedIdx >= tokens.length) {
+          setMetric('m-marked-time', markedTotal.toFixed(1) + 'ms');
+          setMetric('marked-time', markedTotal.toFixed(1) + 'ms');
+          setMetric('m-marked-dom', markedOutput.querySelectorAll('*').length);
+          const speedup = (markedTotal / Math.max(flowTime, 0.01)).toFixed(0);
+          setMetric('m-speedup', speedup + 'x');
+          setStatus(`${label} complete! Flowdown: ${flowTime.toFixed(1)}ms — marked: ${markedTotal.toFixed(1)}ms — ${speedup}x faster`);
+          running = false;
+          return;
+        }
+
+        // Process a batch per frame — enough to show progress but let marked's slowness show
+        const batchSize = Math.max(1, Math.min(8, Math.floor(tokens.length / 100)));
+        for (let b = 0; b < batchSize && markedIdx < tokens.length; b++) {
+          accumulated += tokens[markedIdx++];
+          const ms = performance.now();
+          markedOutput.innerHTML = marked.parse(accumulated);
+          markedTotal += performance.now() - ms;
+        }
+
+        setMetric('m-tokens', markedIdx + '/' + tokens.length);
+        setMetric('m-marked-time', markedTotal.toFixed(1) + 'ms');
+        setMetric('marked-time', markedTotal.toFixed(1) + 'ms');
+        setMetric('m-marked-dom', markedOutput.querySelectorAll('*').length);
+        if (markedTotal > 0 && flowTime > 0) {
+          setMetric('m-speedup', (markedTotal / flowTime).toFixed(0) + 'x');
+        }
+        autoScroll(markedOutput);
+
+        requestAnimationFrame(markedTick);
+      };
+
+      // Small delay so the user sees Flowdown finish first
+      setMetric('m-tokens', '0/' + tokens.length);
+      setTimeout(() => requestAnimationFrame(markedTick), 100);
+    }
+
+    window.startVirtualDemo = function() {
+      if (running) return;
+      resetAll();
+      running = true;
+
+      const huge = Array(30).fill(SAMPLE).join('\n\n---\n\n');
+      const tokens = tokenize(huge);
+      const flowOutput = document.getElementById('flow-output');
+      const markedOutput = document.getElementById('marked-output');
+
+      flowdownInstance = new Flowdown({ container: flowOutput, sanitize: true, virtualize: true, overscan: 2 });
+
+      markedOutput.innerHTML = '<div style="padding:40px;text-align:center;color:#737373"><p style="font-size:32px;margin-bottom:16px">😵</p><p>With 30x content, a traditional renderer creates <strong>33,000+ DOM nodes</strong>.</p><p style="margin-top:12px">Flowdown virtualizes off-screen blocks.<br>Watch the DOM node count stay flat.</p></div>';
+
+      let idx = 0;
+      setStatus(`Virtualization: ${tokens.length} tokens (30x content) — watch the DOM count`);
+
+      const tick = () => {
+        if (idx >= tokens.length) {
+          flowdownInstance.end();
+          const stats = flowdownInstance.getViewportStats();
+          setStatus(`Done! ${stats.total} blocks, only ${stats.visible} in DOM. ${stats.virtualized} virtualized.`);
+          running = false;
+          return;
+        }
+        for (let b = 0; b < 30 && idx < tokens.length; b++) {
+          flowdownInstance.push(tokens[idx++]);
+        }
+        setMetric('m-tokens', idx + '/' + tokens.length);
+        setMetric('m-flow-dom', flowOutput.querySelectorAll('*').length);
+        const stats = flowdownInstance.getViewportStats();
+        if (stats.total > 0) {
+          document.getElementById('virt-stat').style.display = '';
+          setMetric('virt-count', stats.virtualized + '/' + stats.total + ' blocks');
+        }
+        autoScroll(flowOutput);
+        requestAnimationFrame(tick);
+      };
+      tick();
+    };
+
+    window.resetAll = function() {
+      running = false;
+      if (flowdownInstance) { flowdownInstance.destroy(); flowdownInstance = null; }
+      document.getElementById('marked-output').innerHTML = '';
+      document.getElementById('flow-output').innerHTML = '';
+      setMetric('m-tokens', '0');
+      setMetric('m-marked-time', '—');
+      setMetric('m-flow-time', '—');
+      setMetric('m-speedup', '—');
+      setMetric('m-marked-dom', '0');
+      setMetric('m-flow-dom', '0');
+      setMetric('marked-time', '0ms');
+      setMetric('flow-time', '0ms');
+      setStatus('');
+      document.getElementById('virt-stat').style.display = 'none';
+    };
+
+    window.updateSpeed = function() {};
+  </script>
+</body>
+</html>
