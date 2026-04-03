@@ -1,8 +1,8 @@
 # flowdown
 
-[![npm version](https://img.shields.io/npm/v/flowdown)](https://www.npmjs.com/package/flowdown)
-[![license](https://img.shields.io/npm/l/flowdown)](https://github.com/Atomics-hub/flowdown/blob/main/LICENSE)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/flowdown)](https://bundlephobia.com/package/flowdown)
+[![npm version](https://img.shields.io/npm/v/@a5omic/flowdown)](https://www.npmjs.com/package/@a5omic/flowdown)
+[![license](https://img.shields.io/npm/l/@a5omic/flowdown)](https://github.com/Atomics-hub/flowdown/blob/main/LICENSE)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@a5omic/flowdown)](https://bundlephobia.com/package/@a5omic/flowdown)
 
 O(1) streaming markdown renderer for the AI era. Zero dependencies. ~4KB gzipped.
 
@@ -22,13 +22,13 @@ Flowdown is **2,146x faster** than marked for streaming the same document.
 ## Install
 
 ```bash
-npm install flowdown
+npm install @a5omic/flowdown
 ```
 
 ## Usage
 
 ```typescript
-import { Flowdown } from 'flowdown';
+import { Flowdown } from '@a5omic/flowdown';
 
 const renderer = new Flowdown({
   container: document.getElementById('output'),
@@ -44,11 +44,11 @@ renderer.end();
 ### React
 
 ```bash
-npm install flowdown @flowdown/react
+npm install @a5omic/flowdown @a5omic/flowdown-react
 ```
 
 ```tsx
-import { StreamMarkdown } from '@flowdown/react';
+import { StreamMarkdown } from '@a5omic/flowdown-react';
 
 function ChatMessage({ content }: { content: string }) {
   return <StreamMarkdown content={content} />;
@@ -65,7 +65,7 @@ const html = Flowdown.renderToString('# Hello **world**');
 ### With Syntax Highlighting
 
 ```typescript
-import { Flowdown } from 'flowdown';
+import { Flowdown } from '@a5omic/flowdown';
 import hljs from 'highlight.js';
 
 const renderer = new Flowdown({

@@ -1,5 +1,5 @@
 {
-  "name": "flowdown",
+  "name": "@a5omic/flowdown",
   "version": "0.1.0",
   "description": "O(1) streaming markdown renderer for the AI era. Zero dependencies.",
   "type": "module",

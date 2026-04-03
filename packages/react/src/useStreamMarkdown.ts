@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
-import { Flowdown, type FlowdownOptions } from 'flowdown'
+import { Flowdown, type FlowdownOptions } from '@a5omic/flowdown'
 
 export interface UseStreamMarkdownOptions {
   highlight?: FlowdownOptions['highlight']
