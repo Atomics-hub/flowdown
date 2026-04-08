@@ -39,7 +39,7 @@
   "homepage": "https://github.com/Atomics-hub/flowdown#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Atomics-hub/flowdown"
+    "url": "git+https://github.com/Atomics-hub/flowdown.git"
   },
   "bugs": {
     "url": "https://github.com/Atomics-hub/flowdown/issues"
