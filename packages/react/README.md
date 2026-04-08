@@ -1,151 +1,69 @@
-# flowdown
+# flowdown-react
 
-[![npm version](https://img.shields.io/npm/v/@a5omic/flowdown)](https://www.npmjs.com/package/@a5omic/flowdown)
-[![license](https://img.shields.io/npm/l/@a5omic/flowdown)](https://github.com/Atomics-hub/flowdown/blob/main/LICENSE)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/@a5omic/flowdown)](https://bundlephobia.com/package/@a5omic/flowdown)
+React wrapper for [@a5omic/flowdown](https://www.npmjs.com/package/@a5omic/flowdown).
 
-O(1) streaming markdown renderer for the AI era. Zero dependencies. ~4KB gzipped.
-
-Every AI chat app using `react-markdown` re-parses the **entire conversation** on every token. That's O(n²). Flowdown processes each token exactly once. That's O(n).
-
-## Performance
-
-| Benchmark | Flowdown | marked | markdown-it |
-|-----------|----------|--------|-------------|
-| Streaming (2K tokens) | **7.8ms** | 16,765ms | — |
-| DOM output (9KB) | **7.3ms** | 13.4ms | 12.9ms |
-| String output (9KB) | **0.77ms** | 1.00ms | 0.87ms |
-| Bundle (gzipped) | **~4KB** | 12KB | 51KB |
-
-Flowdown is **2,146x faster** than marked for streaming the same document.
+`@a5omic/flowdown-react` keeps Flowdown's incremental parser path while still rendering the unfinished trailing line during React updates.
 
 ## Install
 
 ```bash
-npm install @a5omic/flowdown
+npm install react react-dom @a5omic/flowdown @a5omic/flowdown-react
 ```
 
-## Usage
-
-```typescript
-import { Flowdown } from '@a5omic/flowdown';
-
-const renderer = new Flowdown({
-  container: document.getElementById('output'),
-});
-
-// Stream tokens as they arrive from the LLM
-for await (const chunk of stream) {
-  renderer.push(chunk);
-}
-renderer.end();
-```
-
-### React
-
-```bash
-npm install @a5omic/flowdown @a5omic/flowdown-react
-```
+## Component
 
 ```tsx
-import { StreamMarkdown } from '@a5omic/flowdown-react';
+import { StreamMarkdown } from '@a5omic/flowdown-react'
 
-function ChatMessage({ content }: { content: string }) {
-  return <StreamMarkdown content={content} />;
+export function ChatMessage({ content }: { content: string }) {
+  return <StreamMarkdown content={content} />
 }
 ```
 
-### Static Rendering
+## Hook
 
-```typescript
-const html = Flowdown.renderToString('# Hello **world**');
-// → '<h1>Hello <strong>world</strong></h1>'
-```
+```tsx
+import { useEffect } from 'react'
+import { useStreamMarkdown } from '@a5omic/flowdown-react'
 
-### With Syntax Highlighting
+export function LiveMessage({ chunks }: { chunks: string[] }) {
+  const { ref, push, flush, end } = useStreamMarkdown()
 
-```typescript
-import { Flowdown } from '@a5omic/flowdown';
-import hljs from 'highlight.js';
-
-const renderer = new Flowdown({
-  container: document.getElementById('output'),
-  highlight: (code, lang) => {
-    if (lang && hljs.getLanguage(lang)) {
-      return hljs.highlight(code, { language: lang }).value;
+  useEffect(() => {
+    for (const chunk of chunks) {
+      push(chunk)
+      flush()
     }
-    return code;
-  },
-});
+    end()
+  }, [chunks, push, flush, end])
+
+  return <div ref={ref} />
+}
 ```
-
-### Viewport Virtualization
-
-For long LLM responses, enable virtualization to keep DOM node count flat:
-
-```typescript
-const renderer = new Flowdown({
-  container: document.getElementById('output'),
-  virtualize: true,
-  overscan: 2,
-});
-```
-
-Off-screen blocks are replaced with height-matched spacers. Scrolling back materializes them from cache.
-
-## How It Works
-
-Traditional markdown renderers parse the entire input into an AST, then render the full AST to DOM on every update. During LLM streaming, this means O(n²) total work.
-
-Flowdown uses an **incremental state machine parser** that:
-
-1. Only processes new characters (never re-parses old content)
-2. Emits minimal DOM operations directly (no intermediate AST)
-3. Batches DOM writes per animation frame
-4. Handles incomplete markdown gracefully (FOIM prevention)
-5. Virtualizes off-screen blocks to keep DOM node count constant
-
-Read [RESEARCH.md](RESEARCH.md) for the full technical deep dive.
 
 ## API
 
-### `new Flowdown(options)`
+### `StreamMarkdown`
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `container` | `HTMLElement` | required | DOM element to render into |
-| `highlight` | `(code, lang) => string \| Promise<string>` | — | Syntax highlighter for completed code blocks |
-| `onCodeBlock` | `(code, lang) => void` | — | Callback when a code block completes |
-| `sanitize` | `boolean` | `true` | Sanitize URLs (XSS prevention) |
-| `virtualize` | `boolean` | `false` | Enable viewport virtualization |
-| `overscan` | `number` | `2` | Blocks to keep rendered outside viewport |
+Props:
 
-### Instance Methods
+- `content: string` — Full markdown content received so far
+- `className?: string`
+- `style?: CSSProperties`
+- `highlight?: (code, lang) => string | Promise<string>`
+- `onCodeBlock?: (code, lang) => void`
+- `sanitize?: boolean`
+- `virtualize?: boolean`
 
-- **`push(chunk)`** — Process a chunk of streaming markdown
-- **`end()`** — Signal end of stream, flush buffered content
-- **`reset()`** — Clear all state and output, ready for reuse
-- **`destroy()`** — Clean up all resources
-- **`getViewportStats()`** — Returns `{ total, visible, virtualized }` block counts
+### `useStreamMarkdown(options?)`
 
-### Static Methods
+Returns:
 
-- **`Flowdown.renderToString(markdown)`** — Parse markdown to HTML string (no DOM required)
-
-## Supported Markdown
-
-Flowdown targets "LLM markdown" — the subset that AI models actually output:
-
-- Headings (`# ## ### ####`)
-- Bold, italic, strikethrough, inline code
-- Fenced code blocks with language hints
-- Links and images (inline syntax)
-- Unordered and ordered lists
-- Blockquotes (including nested code blocks)
-- GFM pipe tables with column alignment
-- Horizontal rules
-
-Intentionally not supported (not used by LLMs): reference links, setext headings, indented code blocks, HTML blocks.
+- `ref` — Attach to the container element
+- `push(chunk)` — Append new markdown content
+- `flush()` — Materialize the unfinished trailing line without ending the stream
+- `end()` — Finalize the current stream
+- `reset()` — Clear all output and parser state
 
 ## License
 

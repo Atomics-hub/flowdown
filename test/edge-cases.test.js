@@ -291,5 +291,6 @@ describe('Link edge cases', () => {
     const el = render('Click [**here**](http://example.com)')
     const a = el.querySelector('a')
     assert.ok(a, 'Should have link')
+    assert.strictEqual(a.querySelector('strong')?.textContent, 'here')
   })
 })

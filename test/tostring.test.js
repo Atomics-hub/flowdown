@@ -101,6 +101,13 @@ describe('renderToString', () => {
     assert.ok(!html.includes('" onclick='), 'unescaped quote must not break attribute')
   })
 
+  it('escapes quotes in code fence language to prevent attribute breakout', () => {
+    const html = Flowdown.renderToString('```js"onmouseover="alert(1)\ncode\n```')
+    assert.ok(!html.includes('class="language-js"onmouseover='), 'language hint must not break out of the class attribute')
+    assert.ok(!html.includes('onmouseover="alert(1)"'), 'language hint must not create a real event handler attribute')
+    assert.ok(html.includes('language-js&quot;onmouseover=&quot;alert(1)'), 'quotes should be escaped in class attribute')
+  })
+
   it('escapes HTML in text content', () => {
     const html = Flowdown.renderToString('Use <script>alert(1)</script> carefully')
     assert.ok(!html.includes('<script>'))

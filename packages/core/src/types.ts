@@ -42,7 +42,7 @@ export interface Block {
 export interface SealedBlock {
   id: number
   wrapper: HTMLElement
-  cachedHTML: string
+  fragment: DocumentFragment | null
   height: number
   visible: boolean
 }

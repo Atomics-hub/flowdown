@@ -1,6 +1,6 @@
 {
   "name": "@a5omic/flowdown-react",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React wrapper for Flowdown — O(1) streaming markdown renderer",
   "type": "module",
   "main": "dist/index.js",
@@ -44,7 +44,7 @@
   },
   "peerDependencies": {
     "react": ">=18.0.0",
-    "@a5omic/flowdown": ">=0.1.0"
+    "@a5omic/flowdown": ">=0.1.2"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

@@ -45,5 +45,9 @@ export function useStreamMarkdown(options: UseStreamMarkdownOptions = {}) {
     rendererRef.current?.reset()
   }, [])
 
-  return { ref, push, end, reset }
+  const flush = useCallback(() => {
+    rendererRef.current?.flush()
+  }, [])
+
+  return { ref, push, end, reset, flush }
 }

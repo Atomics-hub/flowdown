@@ -28,7 +28,7 @@ export class VirtualViewport {
     const block: SealedBlock = {
       id: this.nextId++,
       wrapper,
-      cachedHTML: wrapper.innerHTML,
+      fragment: null,
       height: 0,
       visible: true,
     }
@@ -48,14 +48,20 @@ export class VirtualViewport {
       if (!entry.isIntersecting && block.visible) {
         // Leaving viewport — virtualize
         block.height = el.offsetHeight
-        block.cachedHTML = el.innerHTML
-        el.innerHTML = ''
+        const fragment = document.createDocumentFragment()
+        while (el.firstChild) {
+          fragment.appendChild(el.firstChild)
+        }
+        block.fragment = fragment
         el.style.height = block.height + 'px'
         block.visible = false
       } else if (entry.isIntersecting && !block.visible) {
         // Entering viewport — materialize
         el.style.height = ''
-        el.innerHTML = block.cachedHTML
+        if (block.fragment) {
+          el.appendChild(block.fragment)
+          block.fragment = null
+        }
         block.visible = true
       }
     }

@@ -58,9 +58,9 @@ export function StreamMarkdown({
       renderer.reset()
       renderer.push(content)
     }
-
+    renderer.flush()
     prevContentRef.current = content
-  }, [content])
+  }, [content, container, highlight, onCodeBlock, sanitize, virtualize])
 
   return <div ref={containerRef} className={className} style={style} />
 }

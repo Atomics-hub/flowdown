@@ -1,18 +1,23 @@
 {
   "name": "flowdown-monorepo",
   "private": true,
+  "type": "module",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces",
+    "pretest": "npm run build",
     "test": "node --test test/**/*.test.js",
     "bench": "node test/bench/index.js",
     "demo": "npx serve demo"
   },
   "devDependencies": {
+    "@types/react-dom": "^19.2.3",
     "jsdom": "^29.0.1",
     "markdown-it": "^14.1.1",
-    "marked": "^17.0.5"
+    "marked": "^17.0.5",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   }
 }

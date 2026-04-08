@@ -123,6 +123,7 @@ Read [RESEARCH.md](RESEARCH.md) for the full technical deep dive.
 ### Instance Methods
 
 - **`push(chunk)`** — Process a chunk of streaming markdown
+- **`flush()`** — Materialize the unfinished trailing line without ending the stream
 - **`end()`** — Signal end of stream, flush buffered content
 - **`reset()`** — Clear all state and output, ready for reuse
 - **`destroy()`** — Clean up all resources

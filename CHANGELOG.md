@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.2 (2026-04-07)
+
+### Fixes
+
+- Preserve async syntax highlighting across viewport virtualization
+- Render trailing content without `end()` via the new `flush()` API
+- Keep the React wrapper incremental instead of resetting and replaying on every update
+- Fix EOF handling for unterminated fenced code blocks
+- Harden `renderToString()` against code fence language attribute injection
+
+### Validation
+
+- Add React integration coverage with `react-dom`
+- Add focused `flush()` / append-update benchmarks
+- Rebuild tests before `npm test` to avoid stale `dist` artifacts
+
 ## 0.1.0 (2026-04-02)
 
 Initial release.

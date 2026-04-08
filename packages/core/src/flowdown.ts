@@ -1,4 +1,5 @@
 import { type FlowdownOptions, type Block, BlockType, InlineContext } from './types.js'
+import { escapeHtmlAttr, escapeHtmlText, renderInlineHtml } from './inline-html.js'
 import { createElement } from './template-pool.js'
 import { VirtualViewport } from './virtual-viewport.js'
 
@@ -23,6 +24,10 @@ export class Flowdown {
   private wrapperDirty = false
   private closingFenceRe: RegExp | null = null
   private generation = 0
+  private previewNode: Node | null = null
+  private previewParent: Node | null = null
+  private previewMode: 'block' | 'inline' | 'list' | 'code' | null = null
+  private previewContent = ''
 
   constructor(options: FlowdownOptions) {
     this.options = options
@@ -40,11 +45,26 @@ export class Flowdown {
     this.scheduleDomFlush()
   }
 
+  flush(): void {
+    if (this.done) return
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId)
+      this.rafId = null
+    }
+    this.flushDom()
+    this.syncPreview()
+  }
+
   end(): void {
     this.done = true
+    this.clearPreview()
+    if (this.inCodeBlock) {
+      this.flushBufferedCodeLine()
+    }
     if (this.lineBuffer) {
-      this.processLine(this.lineBuffer)
+      const line = this.lineBuffer
       this.lineBuffer = ''
+      this.processLine(line)
     }
     if (this.inCodeBlock) {
       this.closeCodeBlock()
@@ -80,6 +100,10 @@ export class Flowdown {
     this.currentWrapper = null
     this.wrapperDirty = false
     this.wrapperPending = false
+    this.previewNode = null
+    this.previewParent = null
+    this.previewMode = null
+    this.previewContent = ''
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId)
       this.rafId = null
@@ -108,8 +132,9 @@ export class Flowdown {
     return this.viewport?.getStats() ?? { total: 0, visible: 0, virtualized: 0 }
   }
 
-  static renderToString(markdown: string): string {
+  static renderToString(markdown: string, options: { sanitize?: boolean } = {}): string {
     const parts: string[] = []
+    const sanitizeUrls = options.sanitize !== false
     const lines = markdown.split('\n')
     let inCode = false
     let codeFence = ''
@@ -120,60 +145,6 @@ export class Flowdown {
     let inTable = false
     let tableRows: string[][] = []
     let inParagraph = false
-
-    function processInline(text: string): string {
-      let out = ''
-      let i = 0
-      while (i < text.length) {
-        if (text[i] === '`') {
-          const end = text.indexOf('`', i + 1)
-          if (end !== -1) { out += '<code>' + esc(text.slice(i+1, end)) + '</code>'; i = end+1; continue }
-        }
-        if (text[i] === '!' && text[i+1] === '[') {
-          const cb = text.indexOf(']', i+2)
-          if (cb !== -1 && text[cb+1] === '(') {
-            const cp = text.indexOf(')', cb+2)
-            if (cp !== -1) { out += '<img src="' + safeUrl(text.slice(cb+2,cp)) + '" alt="' + esc(text.slice(i+2,cb)) + '">'; i = cp+1; continue }
-          }
-        }
-        if (text[i] === '[') {
-          const cb = text.indexOf(']', i+1)
-          if (cb !== -1 && text[cb+1] === '(') {
-            const cp = text.indexOf(')', cb+2)
-            if (cp !== -1) { out += '<a href="' + safeUrl(text.slice(cb+2,cp)) + '" rel="noopener noreferrer">' + processInline(text.slice(i+1,cb)) + '</a>'; i = cp+1; continue }
-          }
-        }
-        if (text[i] === '*' && text[i+1] === '*') {
-          const end = text.indexOf('**', i+2)
-          if (end !== -1) { out += '<strong>' + processInline(text.slice(i+2, end)) + '</strong>'; i = end+2; continue }
-        }
-        if (text[i] === '*' && text[i+1] !== '*') {
-          const end = findSingleStar(text, i+1)
-          if (end !== -1) { out += '<em>' + processInline(text.slice(i+1, end)) + '</em>'; i = end+1; continue }
-        }
-        if (text[i] === '~' && text[i+1] === '~') {
-          const end = text.indexOf('~~', i+2)
-          if (end !== -1) { out += '<del>' + processInline(text.slice(i+2, end)) + '</del>'; i = end+2; continue }
-        }
-        out += esc(text[i])
-        i++
-      }
-      return out
-    }
-    function findSingleStar(text: string, from: number): number {
-      for (let j = from; j < text.length; j++) {
-        if (text[j] === '*' && text[j+1] !== '*') return j
-      }
-      return -1
-    }
-    function esc(s: string): string {
-      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    }
-    function safeUrl(url: string): string {
-      const t = url.trim()
-      if (/^(javascript|vbscript|data):/i.test(t)) return ''
-      return t.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-    }
 
     function closeList() {
       if (inList) { parts.push(`</${inList}>`); inList = null }
@@ -200,13 +171,13 @@ export class Flowdown {
 
       if (hasSep) {
         parts.push('<thead><tr>')
-        tableRows[0].forEach((c, i) => parts.push(`<th${aligns[i] || ''}>${processInline(c)}</th>`))
+        tableRows[0].forEach((c, i) => parts.push(`<th${aligns[i] || ''}>${renderInlineHtml(c, { sanitizeUrls })}</th>`))
         parts.push('</tr></thead>')
         if (tableRows.length > 2) {
           parts.push('<tbody>')
           for (let r = 2; r < tableRows.length; r++) {
             parts.push('<tr>')
-            tableRows[r].forEach((c, i) => parts.push(`<td${aligns[i] || ''}>${processInline(c)}</td>`))
+            tableRows[r].forEach((c, i) => parts.push(`<td${aligns[i] || ''}>${renderInlineHtml(c, { sanitizeUrls })}</td>`))
             parts.push('</tr>')
           }
           parts.push('</tbody>')
@@ -215,7 +186,7 @@ export class Flowdown {
         parts.push('<tbody>')
         for (const row of tableRows) {
           parts.push('<tr>')
-          row.forEach(c => parts.push(`<td>${processInline(c)}</td>`))
+          row.forEach((c) => parts.push(`<td>${renderInlineHtml(c, { sanitizeUrls })}</td>`))
           parts.push('</tr>')
         }
         parts.push('</tbody>')
@@ -240,7 +211,7 @@ export class Flowdown {
         // Strip blockquote prefix in code blocks
         const check = inBlockquote ? trimmed.replace(/^>\s?/, '') : trimmed
         if (re.test(check) || i >= lines.length) {
-          parts.push(`<pre><code${codeLang ? ` class="language-${esc(codeLang)}"` : ''}>${codeLines.join('\n')}</code></pre>`)
+          parts.push(`<pre><code${codeLang ? ` class="language-${escapeHtmlAttr(codeLang)}"` : ''}>${codeLines.join('\n')}</code></pre>`)
           inCode = false
           codeFence = ''
           codeLang = ''
@@ -248,7 +219,7 @@ export class Flowdown {
           continue
         }
         const codeLine = inBlockquote ? raw.replace(/^>\s?/, '') : raw
-        codeLines.push(codeLine.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'))
+        codeLines.push(escapeHtmlText(codeLine))
         continue
       }
 
@@ -303,7 +274,7 @@ export class Flowdown {
       if (headingMatch) {
         closeParagraph(); closeList()
         const tag = `h${headingMatch[1].length}`
-        parts.push(`<${tag}>${processInline(headingMatch[2])}</${tag}>`)
+        parts.push(`<${tag}>${renderInlineHtml(headingMatch[2], { sanitizeUrls })}</${tag}>`)
         continue
       }
 
@@ -317,7 +288,7 @@ export class Flowdown {
       if (ulMatch) {
         closeParagraph()
         if (inList !== 'ul') { closeList(); parts.push('<ul>'); inList = 'ul' }
-        parts.push(`<li>${processInline(ulMatch[1])}</li>`)
+        parts.push(`<li>${renderInlineHtml(ulMatch[1], { sanitizeUrls })}</li>`)
         continue
       }
 
@@ -325,7 +296,7 @@ export class Flowdown {
       if (olMatch) {
         closeParagraph()
         if (inList !== 'ol') { closeList(); parts.push('<ol>'); inList = 'ol' }
-        parts.push(`<li>${processInline(olMatch[1])}</li>`)
+        parts.push(`<li>${renderInlineHtml(olMatch[1], { sanitizeUrls })}</li>`)
         continue
       }
 
@@ -346,7 +317,7 @@ export class Flowdown {
       } else {
         parts.push(' ')
       }
-      parts.push(processInline(content))
+      parts.push(renderInlineHtml(content, { sanitizeUrls }))
     }
 
     closeParagraph()
@@ -366,24 +337,14 @@ export class Flowdown {
       if (this.inCodeBlock) {
         this.lineBuffer += ch
         if (ch === '\n') {
-          let line = this.lineBuffer
-          this.lineBuffer = ''
-          const inBq = this.findBlockDepth(BlockType.Blockquote) >= 0
-          if (inBq) {
-            const stripped = line.replace(/^>\s?/, '')
-            if (stripped !== line) line = stripped
-          }
-          if (this.isClosingFence(line)) {
-            this.closeCodeBlock()
-          } else {
-            this.codeContent += line
-            this.appendCodeText(line)
-          }
+          this.clearPreview()
+          this.flushBufferedCodeLine()
         }
         continue
       }
 
       if (ch === '\n') {
+        this.clearPreview()
         const line = this.lineBuffer
         this.lineBuffer = ''
         this.processLine(line)
@@ -391,6 +352,26 @@ export class Flowdown {
         this.lineBuffer += ch
       }
     }
+  }
+
+  private flushBufferedCodeLine(): void {
+    if (!this.lineBuffer) return
+
+    let line = this.lineBuffer
+    this.lineBuffer = ''
+    const inBq = this.findBlockDepth(BlockType.Blockquote) >= 0
+    if (inBq) {
+      const stripped = line.replace(/^>\s?/, '')
+      if (stripped !== line) line = stripped
+    }
+
+    if (this.isClosingFence(line)) {
+      this.closeCodeBlock()
+      return
+    }
+
+    this.codeContent += line
+    this.appendCodeText(line)
   }
 
   private processLine(line: string): void {
@@ -533,6 +514,198 @@ export class Flowdown {
       this.appendText(' ')
     }
     this.processInline(trimmed)
+  }
+
+  private syncPreview(): void {
+    if (!this.lineBuffer || this.inTable) {
+      this.clearPreview()
+      return
+    }
+
+    if (this.inCodeBlock) {
+      this.renderCodePreview()
+      return
+    }
+
+    const line = this.lineBuffer
+    const trimmed = line.trimEnd()
+    const blockquoteDepth = this.findBlockDepth(BlockType.Blockquote)
+
+    if (blockquoteDepth >= 0 && /^>\s?/.test(trimmed) && this.currentBlockIs(BlockType.Paragraph)) {
+      this.renderInlinePreview(trimmed.replace(/^>\s?/, ''), true)
+      return
+    }
+
+    if (!this.startsStandaloneBlock(trimmed) && this.currentBlockIs(BlockType.Paragraph)) {
+      this.renderInlinePreview(trimmed, true)
+      return
+    }
+
+    const listPreview = this.matchListPreview(trimmed)
+    if (listPreview) {
+      const listType = listPreview.kind === 'ul' ? BlockType.UnorderedList : BlockType.OrderedList
+      const listDepth = this.findBlockDepth(listType)
+      if (listDepth >= 0) {
+        const list = this.blockStack[listDepth].element
+        if (list) {
+          this.renderListPreview(list, listPreview.content)
+          return
+        }
+      }
+    }
+
+    this.renderBlockPreview(Flowdown.renderToString(line, {
+      sanitize: this.options.sanitize !== false,
+    }))
+  }
+
+  private startsStandaloneBlock(line: string): boolean {
+    return /^>\s?/.test(line)
+      || /^(`{3,}|~{3,})(.*)$/.test(line)
+      || /^(#{1,6})\s+/.test(line)
+      || line === '---'
+      || line === '***'
+      || line === '___'
+      || /^[-*+]\s+/.test(line)
+      || /^\d+[.)]\s+/.test(line)
+      || this.isTableRow(line)
+  }
+
+  private matchListPreview(line: string): { kind: 'ul' | 'ol'; content: string } | null {
+    const ulMatch = line.match(/^[-*+]\s+(.*)$/)
+    if (ulMatch) return { kind: 'ul', content: ulMatch[1] }
+
+    const olMatch = line.match(/^\d+[.)]\s+(.*)$/)
+    if (olMatch) return { kind: 'ol', content: olMatch[1] }
+
+    return null
+  }
+
+  private renderBlockPreview(html: string): void {
+    if (!html) {
+      this.clearPreview()
+      return
+    }
+
+    if (
+      this.previewMode === 'block'
+      && this.previewNode instanceof HTMLElement
+      && this.previewParent === this.container
+    ) {
+      if (this.previewContent !== html) {
+        this.previewNode.innerHTML = html
+        this.previewContent = html
+      }
+      return
+    }
+
+    this.clearPreview()
+    const wrapper = createElement('div')
+    wrapper.className = 'fd-block fd-preview'
+    wrapper.innerHTML = html
+    this.container.appendChild(wrapper)
+    this.previewNode = wrapper
+    this.previewParent = this.container
+    this.previewMode = 'block'
+    this.previewContent = html
+  }
+
+  private renderInlinePreview(text: string, leadingSpace: boolean): void {
+    const parent = this.currentBlock()?.element ?? this.currentWrapper ?? this.container
+    const html = (leadingSpace ? ' ' : '') + renderInlineHtml(text, {
+      sanitizeUrls: this.options.sanitize !== false,
+    })
+
+    if (
+      this.previewMode === 'inline'
+      && this.previewNode instanceof HTMLElement
+      && this.previewParent === parent
+    ) {
+      if (this.previewContent !== html) {
+        this.previewNode.innerHTML = html
+        this.previewContent = html
+      }
+      return
+    }
+
+    this.clearPreview()
+    const span = createElement('span')
+    span.className = 'fd-preview'
+    span.innerHTML = html
+    parent.appendChild(span)
+    this.previewNode = span
+    this.previewParent = parent
+    this.previewMode = 'inline'
+    this.previewContent = html
+  }
+
+  private renderListPreview(parent: HTMLElement, text: string): void {
+    const html = renderInlineHtml(text, {
+      sanitizeUrls: this.options.sanitize !== false,
+    })
+
+    if (
+      this.previewMode === 'list'
+      && this.previewNode instanceof HTMLElement
+      && this.previewParent === parent
+    ) {
+      if (this.previewContent !== html) {
+        this.previewNode.innerHTML = html
+        this.previewContent = html
+      }
+      return
+    }
+
+    this.clearPreview()
+    const li = createElement('li')
+    li.className = 'fd-preview'
+    li.innerHTML = html
+    parent.appendChild(li)
+    this.previewNode = li
+    this.previewParent = parent
+    this.previewMode = 'list'
+    this.previewContent = html
+  }
+
+  private renderCodePreview(): void {
+    const code = this.currentBlock()?.element
+    if (!code) return
+
+    let text = this.lineBuffer
+    if (this.findBlockDepth(BlockType.Blockquote) >= 0) {
+      const stripped = text.replace(/^>\s?/, '')
+      if (stripped !== text) text = stripped
+    }
+
+    if (
+      this.previewMode === 'code'
+      && this.previewNode instanceof Text
+      && this.previewParent === code
+    ) {
+      if (this.previewContent !== text) {
+        this.previewNode.textContent = text
+        this.previewContent = text
+      }
+      return
+    }
+
+    this.clearPreview()
+    const preview = document.createTextNode(text)
+    code.appendChild(preview)
+    this.previewNode = preview
+    this.previewParent = code
+    this.previewMode = 'code'
+    this.previewContent = text
+  }
+
+  private clearPreview(): void {
+    if (this.previewNode?.parentNode) {
+      this.previewNode.parentNode.removeChild(this.previewNode)
+    }
+    this.previewNode = null
+    this.previewParent = null
+    this.previewMode = null
+    this.previewContent = ''
   }
 
   private handleListItem(listType: BlockType, tag: string, content: string): void {
@@ -733,7 +906,9 @@ export class Flowdown {
     this.enqueueDom(() => {
       const a = createElement('a') as HTMLAnchorElement
       a.href = cleanUrl
-      a.textContent = text
+      a.innerHTML = renderInlineHtml(text, {
+        sanitizeUrls: this.options.sanitize !== false,
+      })
       a.rel = 'noopener noreferrer'
       const parent = block?.element ?? this.currentWrapper ?? this.container
       parent.appendChild(a)
@@ -944,7 +1119,9 @@ export class Flowdown {
         const headerRow = createElement('tr')
         for (let c = 0; c < rows[0].length; c++) {
           const th = createElement('th')
-          th.textContent = rows[0][c]
+          th.innerHTML = renderInlineHtml(rows[0][c], {
+            sanitizeUrls: this.options.sanitize !== false,
+          })
           if (alignments[c]) th.style.textAlign = alignments[c]!
           headerRow.appendChild(th)
         }
@@ -957,7 +1134,9 @@ export class Flowdown {
             const tr = createElement('tr')
             for (let c = 0; c < rows[i].length; c++) {
               const td = createElement('td')
-              td.textContent = rows[i][c]
+              td.innerHTML = renderInlineHtml(rows[i][c], {
+                sanitizeUrls: this.options.sanitize !== false,
+              })
               if (alignments[c]) td.style.textAlign = alignments[c]!
               tr.appendChild(td)
             }
@@ -971,7 +1150,9 @@ export class Flowdown {
           const tr = createElement('tr')
           for (const cell of row) {
             const td = createElement('td')
-            td.textContent = cell
+            td.innerHTML = renderInlineHtml(cell, {
+              sanitizeUrls: this.options.sanitize !== false,
+            })
             tr.appendChild(td)
           }
           tbody.appendChild(tr)

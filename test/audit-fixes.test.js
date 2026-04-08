@@ -66,6 +66,34 @@ describe('destroy lifecycle', () => {
   })
 })
 
+describe('unterminated fenced code blocks at EOF', () => {
+  it('keeps the final code line inside the block when the closing fence is missing', () => {
+    const el = render('```js\nconst x = 1;')
+    const code = el.querySelector('code')
+    assert.ok(code, 'Should render a code block')
+    assert.strictEqual(code.textContent, 'const x = 1;')
+    assert.strictEqual(el.querySelectorAll('p').length, 0, 'Should not emit stray paragraphs')
+  })
+
+  it('accepts a closing fence without a trailing newline', () => {
+    const el = render('```js\nconst x = 1;\n```')
+    const code = el.querySelector('code')
+    assert.ok(code, 'Should render a code block')
+    assert.strictEqual(code.textContent, 'const x = 1;\n')
+    assert.strictEqual(el.querySelectorAll('p').length, 0, 'Should not emit stray paragraphs')
+  })
+
+  it('keeps blockquote code blocks intact at EOF', () => {
+    const el = render('> ```js\n> const x = 1;')
+    const blockquote = el.querySelector('blockquote')
+    const code = el.querySelector('code')
+    assert.ok(blockquote, 'Should render a blockquote')
+    assert.ok(code, 'Should render a code block inside the blockquote')
+    assert.strictEqual(code.textContent, 'const x = 1;')
+    assert.strictEqual(blockquote.querySelectorAll('p').length, 0, 'Should not create stray paragraphs inside the blockquote')
+  })
+})
+
 describe('wrapperPending desync — consecutive blocks in single push', () => {
   it('renders two paragraphs separated by blank line in single push', () => {
     const el = render('First paragraph\n\nSecond paragraph\n')
@@ -138,5 +166,99 @@ describe('inline state after closeAllInline', () => {
     // "normal text here" should be in first paragraph, not inside <strong>
     const strong = el.querySelector('strong')
     assert.strictEqual(strong.textContent, 'bold')
+  })
+})
+
+describe('virtualization with async highlighting', () => {
+  it('preserves highlighted code after a block is virtualized and rematerialized', async () => {
+    const originalGetComputedStyle = globalThis.getComputedStyle
+    const originalIntersectionObserver = globalThis.IntersectionObserver
+
+    class FakeIntersectionObserver {
+      static instance = null
+
+      constructor(callback) {
+        this.callback = callback
+        FakeIntersectionObserver.instance = this
+      }
+
+      observe() {}
+      disconnect() {}
+
+      fire(entry) {
+        this.callback([entry])
+      }
+    }
+
+    globalThis.getComputedStyle = () => ({ overflowY: 'auto' })
+    globalThis.IntersectionObserver = FakeIntersectionObserver
+
+    try {
+      const container = document.createElement('div')
+      const f = new Flowdown({
+        container,
+        virtualize: true,
+        highlight: async (code) => `<span class="hl">${code}</span>`,
+      })
+
+      f.push('```js\nconst x = 1;\n```\n')
+      f.end()
+
+      const wrapper = container.firstElementChild
+      assert.ok(wrapper, 'Should render a wrapper block')
+
+      FakeIntersectionObserver.instance.fire({ target: wrapper, isIntersecting: false })
+      await Promise.resolve()
+      FakeIntersectionObserver.instance.fire({ target: wrapper, isIntersecting: true })
+      await Promise.resolve()
+
+      assert.ok(container.innerHTML.includes('<span class="hl">const x = 1;\n</span>'))
+    } finally {
+      globalThis.getComputedStyle = originalGetComputedStyle
+      globalThis.IntersectionObserver = originalIntersectionObserver
+    }
+  })
+})
+
+describe('non-terminal flush', () => {
+  it('renders the trailing line without ending the stream', () => {
+    const container = document.createElement('div')
+    const f = new Flowdown({ container })
+
+    f.push('Hello')
+    f.flush()
+    assert.ok(container.innerHTML.includes('Hello'))
+
+    f.push(' world')
+    f.flush()
+    assert.ok(container.innerHTML.includes('Hello world'))
+  })
+
+  it('keeps incremental updates after flushing the preview line', () => {
+    const container = document.createElement('div')
+    const f = new Flowdown({ container })
+
+    f.push('Alpha')
+    f.flush()
+    f.push('\n\nBeta')
+    f.flush()
+
+    const paragraphs = container.querySelectorAll('p')
+    assert.strictEqual(paragraphs.length, 2)
+    assert.strictEqual(paragraphs[0].textContent, 'Alpha')
+    assert.strictEqual(paragraphs[1].textContent, 'Beta')
+  })
+
+  it('renders unfinished code lines during flush without closing the fence', () => {
+    const container = document.createElement('div')
+    const f = new Flowdown({ container })
+
+    f.push('```js\nconst x')
+    f.flush()
+    assert.ok(container.querySelector('code')?.textContent?.includes('const x'))
+
+    f.push(' = 1;')
+    f.flush()
+    assert.ok(container.querySelector('code')?.textContent?.includes('const x = 1;'))
   })
 })

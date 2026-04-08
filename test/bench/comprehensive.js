@@ -62,7 +62,7 @@ for (const [label, doc] of [["SMALL ("+SMALL.length+"B)", SMALL], ["MEDIUM ("+ME
 }
 
 // Streaming benchmark - the key one
-console.log("--- STREAMING (617 tokens, 2.7KB doc) ---")
+console.log("--- STREAMING ---")
 const STREAM_DOC = Array(5).fill("# Heading\n\nA **bold** paragraph with *italic*, `code`, and [link](http://x.com).\n\n- Item 1\n- Item 2\n\n> Quote\n\n```js\nconst x = 1;\n```\n\n| A | B |\n|---|---|\n| 1 | 2 |\n").join("\n")
 
 function tokenize(text) {

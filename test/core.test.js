@@ -172,6 +172,14 @@ describe('Tables', () => {
     const cells = table.querySelectorAll('td')
     assert.strictEqual(cells.length, 4)
   })
+
+  it('renders inline markdown inside table cells', () => {
+    const el = render('| Name | Link |\n|------|------|\n| **Alice** | [Profile](https://example.com) |')
+    const table = el.querySelector('table')
+    assert.ok(table)
+    assert.strictEqual(table.querySelector('strong')?.textContent, 'Alice')
+    assert.strictEqual(table.querySelector('a')?.textContent, 'Profile')
+  })
 })
 
 describe('Horizontal rules', () => {
