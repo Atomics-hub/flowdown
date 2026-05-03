@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { billingForEmail, formatUnixDate } from '@/lib/billing'
 import { getSession } from '@/lib/auth'
-import { maskApiKey, tenantsForEmail } from '@/lib/tenants'
+import { maskApiKey } from '@/lib/tenants'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +11,8 @@ export default async function Dashboard() {
   if (!session) redirect('/login')
 
   const billing = await billingForEmail(session.email)
-  const tenants = tenantsForEmail(session.email)
+  const renderSubscriptions = billing.subscriptions.filter((subscription) => subscription.renderApiKey)
+  const proSubscriptions = billing.subscriptions.filter((subscription) => subscription.plan?.id === 'pro' && subscription.accessActive)
 
   return (
     <main className="shell">
@@ -27,7 +28,7 @@ export default async function Dashboard() {
       <section className="intro">
         <div className="kicker">{session.email}</div>
         <h1>Dashboard</h1>
-        <p>Billing state comes from Stripe. Render API access is manually provisioned until demand justifies a database-backed tenant system.</p>
+        <p>Billing state comes from Stripe. Cloud Render API keys are generated automatically for active Cloud Render subscriptions.</p>
       </section>
 
       <section className="stack">
@@ -74,26 +75,36 @@ export default async function Dashboard() {
         <div className="grid-2">
           <div className="card">
             <h2>Render API</h2>
-            {tenants.length ? (
-              <ul className="list">
-                {tenants.map((tenant) => (
-                  <li key={tenant.apiKey}>
-                    {tenant.name || 'Tenant'}: <code>{maskApiKey(tenant.apiKey)}</code>
-                  </li>
+            {renderSubscriptions.length ? (
+              <div className="stack">
+                {renderSubscriptions.map((subscription) => (
+                  <div className="provisioned" key={subscription.id}>
+                    <p className="notice good">Cloud Render is active for {subscription.plan.name}.</p>
+                    <p>API key</p>
+                    <code className="key">{subscription.renderApiKey}</code>
+                    <p>Masked key: <code>{maskApiKey(subscription.renderApiKey)}</code></p>
+                    <pre className="snippet">{`curl ${process.env.NEXT_PUBLIC_APP_URL || ''}/api/render \\
+  -H "Authorization: Bearer ${subscription.renderApiKey}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"markdown":"# Hello **world**"}'`}</pre>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : (
-              <p>No render API key has been provisioned for this email.</p>
+              <p>No active Cloud Render subscription found for this email.</p>
             )}
             <p>Endpoint: <code>POST /api/render</code></p>
           </div>
 
           <div className="card">
             <h2>Next Steps</h2>
+            {proSubscriptions.length ? (
+              <p className="notice good">Pro is active. Private-model onboarding is included with this subscription.</p>
+            ) : null}
             <ul className="list">
-              <li>Use Stripe Checkout for self-serve subscription starts.</li>
               <li>Use the billing portal for invoices, cards, and cancellations.</li>
-              <li>Add tenants to <code>FLOWDOWN_TENANTS_JSON</code> for early Cloud Render users.</li>
+              <li>Use the Cloud Render key immediately after checkout.</li>
+              <li>Keep the same checkout email for dashboard access.</li>
             </ul>
           </div>
         </div>

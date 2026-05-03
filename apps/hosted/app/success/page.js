@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 export default async function Success({ searchParams }) {
   const params = await searchParams
+  const sessionId = params?.session_id || ''
 
   return (
     <main className="shell">
@@ -14,12 +15,16 @@ export default async function Success({ searchParams }) {
 
       <section className="intro">
         <h1>Checkout complete.</h1>
-        <p>Stripe accepted the checkout session. Use the dashboard login with the same email to view billing and provisioning status.</p>
+        <p>Your subscription is active in Stripe. Open the dashboard to see billing status and any automatically provisioned access.</p>
       </section>
 
       <div className="card">
-        <p>Session: <code>{params?.session_id || 'unknown'}</code></p>
-        <Link className="button primary" href="/login">Open dashboard</Link>
+        <p>Session: <code>{sessionId || 'unknown'}</code></p>
+        {sessionId ? (
+          <Link className="button primary" href={`/api/auth/checkout-session?session_id=${encodeURIComponent(sessionId)}`}>Open dashboard</Link>
+        ) : (
+          <Link className="button primary" href="/login">Open dashboard</Link>
+        )}
       </div>
     </main>
   )

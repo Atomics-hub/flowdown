@@ -6,7 +6,7 @@ Serverless control plane for Hosted Flowdown. It is designed to stay dormant unt
 - Stripe customer portal for billing management
 - Magic-link dashboard access
 - Signed webhook endpoint ready for Stripe events
-- Authenticated render API for manually provisioned Cloud Render customers
+- Authenticated render API for active Cloud Render customers
 
 ## Local Setup
 
@@ -42,7 +42,7 @@ Subscribe to:
 - `invoice.payment_succeeded`
 - `invoice.payment_failed`
 
-The webhook currently verifies and logs events. Once the hosted product needs automatic provisioning, wire `handleStripeEvent()` to the customer database or provisioning queue.
+The webhook verifies and logs billing events. Provisioning does not require a database: Cloud Render API keys are derived from active Stripe subscription IDs and validated against Stripe on render requests.
 
 ## Dormant Deployment
 
@@ -67,7 +67,7 @@ Current Stripe live webhook:
 we_1TT7lo9Vir2Bvf4wNgRDgzR0
 ```
 
-The current deployment uses live Stripe Checkout in the Flowdown Stripe account. Provisioning is still manual through `FLOWDOWN_TENANTS_JSON` while the hosted product validates demand.
+The current deployment uses live Stripe Checkout in the Flowdown Stripe account. After checkout, `/success` can open the buyer dashboard from the verified Checkout Session. Active Cloud Render subscriptions receive a generated `fd_live...` render API key in the dashboard.
 
 Required production environment variables:
 
@@ -86,7 +86,8 @@ Optional:
 ```text
 RESEND_API_KEY=...
 LOGIN_FROM_EMAIL="Flowdown <login@your-domain.com>"
-FLOWDOWN_TENANTS_JSON='[{"name":"Acme","email":"buyer@example.com","apiKey":"fd_live_xxx","plan":"cloud"}]'
+FLOWDOWN_API_KEY_SECRET=...
+FLOWDOWN_TENANTS_JSON='[{"name":"Acme","email":"buyer@example.com","apiKey":"fd_manual_xxx","plan":"cloud"}]'
 ```
 
 Example deployment:
@@ -110,7 +111,7 @@ https://SERVICE_URL/api/stripe/webhook
 
 ## Render API
 
-Cloud Render customers can be manually provisioned in `FLOWDOWN_TENANTS_JSON`.
+Cloud Render customers get an API key automatically from their active Stripe subscription. `FLOWDOWN_TENANTS_JSON` remains available as a manual override for pilots or internal testing.
 
 ```bash
 curl https://your-hosted-domain.com/api/render \

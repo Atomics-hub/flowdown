@@ -1,4 +1,5 @@
 import { planForPrice } from '@/lib/plans'
+import { provisioningForSubscription } from '@/lib/provisioning'
 import { getStripe, stripeConfigured } from '@/lib/stripe'
 
 export async function billingForEmail(email) {
@@ -25,6 +26,7 @@ export async function billingForEmail(email) {
     for (const subscription of customerSubscriptions.data) {
       const firstItem = subscription.items.data[0]
       const priceId = firstItem?.price?.id || ''
+      const provisioning = provisioningForSubscription(subscription)
       subscriptions.push({
         id: subscription.id,
         customerId: customer.id,
@@ -32,6 +34,8 @@ export async function billingForEmail(email) {
         currentPeriodEnd: subscription.current_period_end,
         plan: planForPrice(priceId),
         priceId,
+        accessActive: provisioning.accessActive,
+        renderApiKey: provisioning.renderApiKey,
       })
     }
   }

@@ -101,6 +101,26 @@ input:focus { border-color: var(--accent); outline: none; }
 code { font-family: var(--mono); background: #080808; border: 1px solid var(--border); border-radius: 5px; padding: 2px 5px; }
 .stack { display: grid; gap: 12px; }
 .mt { margin-top: 18px; }
+.key {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.snippet {
+  margin: 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #080808;
+  color: var(--text);
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.provisioned { display: grid; gap: 8px; }
 
 @media (max-width: 860px) {
   .grid, .grid-2 { grid-template-columns: 1fr; }

@@ -1,4 +1,5 @@
 import { Flowdown } from '@a5omic/flowdown'
+import { tenantForRenderApiKey } from '@/lib/provisioning'
 import { findTenantByApiKey } from '@/lib/tenants'
 
 export const runtime = 'nodejs'
@@ -7,7 +8,7 @@ const MAX_MARKDOWN_BYTES = 250_000
 
 export async function POST(request) {
   const apiKey = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim()
-  const tenant = findTenantByApiKey(apiKey)
+  const tenant = findTenantByApiKey(apiKey) || await tenantForRenderApiKey(apiKey)
 
   if (!tenant) {
     return Response.json({ error: 'Invalid API key' }, { status: 401 })

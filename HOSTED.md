@@ -22,7 +22,7 @@ Hosted checkout is live at:
 
 https://flowdown-hosted-gejo3xsy3a-uc.a.run.app/
 
-Pro and Cloud Render are still early-access plans. Checkout creates the subscription, and provisioning is manual while the hosted product is validating demand.
+Pro and Cloud Render are still early-access plans. Checkout creates the subscription, then the dashboard opens from the verified Stripe Checkout session. Cloud Render subscriptions automatically receive a render API key in the dashboard.
 
 ## Hosted App
 
@@ -32,7 +32,7 @@ The dormant hosted control plane lives in [`apps/hosted`](apps/hosted). It inclu
 - Stripe customer portal for subscription management
 - Magic-link dashboard access
 - Signed Stripe webhook endpoint
-- Authenticated `POST /api/render` endpoint for manually provisioned Cloud Render users
+- Authenticated `POST /api/render` endpoint for active Cloud Render subscriptions
 
 Build it with:
 
