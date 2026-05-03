@@ -46,7 +46,22 @@ The webhook currently verifies and logs events. Once the hosted product needs au
 
 ## Dormant Deployment
 
-Use Vercel as a serverless deployment target. Per Vercel's monorepo setup, create a project from this repo and select `apps/hosted` as the root directory. The app has no always-on worker and no persistent instance to keep warm.
+Use Cloud Run as the dormant deployment target. Keep `--min-instances=0` so the service scales to zero when idle.
+
+Current test-mode deployment:
+
+```text
+https://flowdown-hosted-gejo3xsy3a-uc.a.run.app
+```
+
+Current Stripe test prices:
+
+```text
+STRIPE_PRO_PRICE_ID=price_1TT6oePbkDt7cUXmY6pBywdf
+STRIPE_CLOUD_RENDER_PRICE_ID=price_1TT6oePbkDt7cUXmUmBVHnZJ
+```
+
+The current deployment uses Stripe test mode because the local Stripe CLI live key is restricted and cannot create live products/prices. For real payments, create or copy equivalent live prices in Stripe and update the Cloud Run env vars plus `flowdown-stripe-secret-key`.
 
 Required production environment variables:
 
@@ -66,6 +81,31 @@ Optional:
 RESEND_API_KEY=...
 LOGIN_FROM_EMAIL="Flowdown <login@your-domain.com>"
 FLOWDOWN_TENANTS_JSON='[{"name":"Acme","email":"buyer@example.com","apiKey":"fd_live_xxx","plan":"cloud"}]'
+```
+
+Example deployment:
+
+```bash
+gcloud run deploy flowdown-hosted \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --min-instances 0 \
+  --max-instances 3 \
+  --set-env-vars APP_URL=https://SERVICE_URL,NEXT_PUBLIC_APP_URL=https://SERVICE_URL,STRIPE_PRO_PRICE_ID=price_xxx,STRIPE_CLOUD_RENDER_PRICE_ID=price_xxx \
+  --set-secrets AUTH_SECRET=flowdown-auth-secret:latest,STRIPE_SECRET_KEY=flowdown-stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=flowdown-stripe-webhook-secret:latest
+```
+
+Create a Stripe webhook pointing at:
+
+```text
+https://SERVICE_URL/api/stripe/webhook
+```
+
+Current Stripe test webhook:
+
+```text
+we_1TT6wMPbkDt7cUXmERzZ13ML
 ```
 
 ## Render API

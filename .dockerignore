@@ -1,0 +1,8 @@
+node_modules
+dist
+.next
+apps/hosted/.next
+*.tsbuildinfo
+.git
+.DS_Store
+npm-debug.log*
