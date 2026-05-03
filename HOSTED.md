@@ -21,3 +21,21 @@ Flowdown has 579 monthly npm downloads before any real launch. Hosted plans are 
 Open a GitHub issue with the title `Hosted Flowdown access` and include the chat UI you are building:
 
 https://github.com/Atomics-hub/flowdown/issues/new?title=Hosted%20Flowdown%20access
+
+## Hosted App
+
+The dormant hosted control plane lives in [`apps/hosted`](apps/hosted). It includes:
+
+- Stripe Checkout for Pro and Cloud Render
+- Stripe customer portal for subscription management
+- Magic-link dashboard access
+- Signed Stripe webhook endpoint
+- Authenticated `POST /api/render` endpoint for manually provisioned Cloud Render users
+
+Build it with:
+
+```bash
+npm run build:hosted
+```
+
+It is meant for serverless hosting, with no always-on process until a request comes in.

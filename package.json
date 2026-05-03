@@ -3,10 +3,12 @@
   "private": true,
   "type": "module",
   "workspaces": [
+    "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspace @a5omic/flowdown --workspace @a5omic/flowdown-react",
+    "build:hosted": "npm run build && npm run build --workspace @a5omic/flowdown-hosted",
     "build:pages": "npm run build && node scripts/build-pages.mjs",
     "pretest": "npm run build",
     "test": "node --test test/**/*.test.js",

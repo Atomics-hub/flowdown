@@ -29,7 +29,7 @@ Flowdown stays MIT and local-first. Hosted Flowdown is an early-access commercia
 | Pro | $49/mo | Teams using private models | Private model setup, hosted preview links, team API keys, usage logs |
 | Cloud Render | $199/mo | Chat UIs that need server-side rendering | Render API, cached transcript HTML, priority support |
 
-Flowdown has 579 monthly npm downloads before any real launch. See [HOSTED.md](HOSTED.md) to request access.
+Flowdown has 579 monthly npm downloads before any real launch. See [HOSTED.md](HOSTED.md) to request access or inspect the dormant hosted app in [apps/hosted](apps/hosted).
 
 ## Install
 
