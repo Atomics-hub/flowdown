@@ -48,20 +48,26 @@ The webhook currently verifies and logs events. Once the hosted product needs au
 
 Use Cloud Run as the dormant deployment target. Keep `--min-instances=0` so the service scales to zero when idle.
 
-Current test-mode deployment:
+Current live deployment:
 
 ```text
 https://flowdown-hosted-gejo3xsy3a-uc.a.run.app
 ```
 
-Current Stripe test prices:
+Current Stripe live prices:
 
 ```text
-STRIPE_PRO_PRICE_ID=price_1TT6oePbkDt7cUXmY6pBywdf
-STRIPE_CLOUD_RENDER_PRICE_ID=price_1TT6oePbkDt7cUXmUmBVHnZJ
+STRIPE_PRO_PRICE_ID=price_1TT7he9Vir2Bvf4wWaOc6p7Q
+STRIPE_CLOUD_RENDER_PRICE_ID=price_1TT7j09Vir2Bvf4wvXSFziuG
 ```
 
-The current deployment uses Stripe test mode because the local Stripe CLI live key is restricted and cannot create live products/prices. For real payments, create or copy equivalent live prices in Stripe and update the Cloud Run env vars plus `flowdown-stripe-secret-key`.
+Current Stripe live webhook:
+
+```text
+we_1TT7lo9Vir2Bvf4wNgRDgzR0
+```
+
+The current deployment uses live Stripe Checkout in the Flowdown Stripe account. Provisioning is still manual through `FLOWDOWN_TENANTS_JSON` while the hosted product validates demand.
 
 Required production environment variables:
 
@@ -100,12 +106,6 @@ Create a Stripe webhook pointing at:
 
 ```text
 https://SERVICE_URL/api/stripe/webhook
-```
-
-Current Stripe test webhook:
-
-```text
-we_1TT6wMPbkDt7cUXmERzZ13ML
 ```
 
 ## Render API

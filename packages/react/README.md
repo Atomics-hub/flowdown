@@ -8,7 +8,7 @@ React wrapper for [@a5omic/flowdown](https://www.npmjs.com/package/@a5omic/flowd
 
 Flowdown stays MIT and local-first. Hosted Flowdown adds early-access private model support at $49/mo and server-side chat rendering at $199/mo.
 
-See [HOSTED.md](https://github.com/Atomics-hub/flowdown/blob/main/HOSTED.md) to request access.
+Start hosted checkout at https://flowdown-hosted-gejo3xsy3a-uc.a.run.app/ or read [HOSTED.md](https://github.com/Atomics-hub/flowdown/blob/main/HOSTED.md).
 
 ## Install
 

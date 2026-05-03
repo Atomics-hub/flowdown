@@ -16,11 +16,13 @@ Hosted Flowdown is an early-access commercial version for teams that want help r
 
 Flowdown has 579 monthly npm downloads before any real launch. Hosted plans are a way to turn that inbound usage into a simple commercial offer without changing the open-source package.
 
-## Request Access
+## Start Checkout
 
-Open a GitHub issue with the title `Hosted Flowdown access` and include the chat UI you are building:
+Hosted checkout is live at:
 
-https://github.com/Atomics-hub/flowdown/issues/new?title=Hosted%20Flowdown%20access
+https://flowdown-hosted-gejo3xsy3a-uc.a.run.app/
+
+Pro and Cloud Render are still early-access plans. Checkout creates the subscription, and provisioning is manual while the hosted product is validating demand.
 
 ## Hosted App
 
