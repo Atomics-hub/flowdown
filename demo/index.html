@@ -26,6 +26,7 @@
     .badge-blue { background: rgba(59,130,246,0.12); color: var(--accent); border: 1px solid rgba(59,130,246,0.25); }
     .badge-yellow { background: rgba(234,179,8,0.12); color: var(--yellow); border: 1px solid rgba(234,179,8,0.25); }
     .badge-purple { background: rgba(168,85,247,0.12); color: #a855f7; border: 1px solid rgba(168,85,247,0.25); }
+    .badge-teal { background: rgba(20,184,166,0.12); color: #14b8a6; border: 1px solid rgba(20,184,166,0.25); }
 
     .controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
     button { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
@@ -35,6 +36,25 @@
     select { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--font); font-size: 13px; cursor: pointer; }
 
     .status { text-align: center; margin: 0 auto 16px; font-size: 13px; color: var(--text-muted); min-height: 18px; }
+
+    .pricing { max-width: 1040px; margin: 0 auto 34px; padding: 0 20px; }
+    .pricing-kicker { color: var(--text-muted); font-family: var(--mono); font-size: 12px; margin-bottom: 8px; }
+    .pricing h2 { font-size: 22px; margin-bottom: 8px; }
+    .pricing-copy { color: var(--text-muted); max-width: 760px; margin: 0 0 18px; line-height: 1.6; font-size: 14px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .plan { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; min-height: 216px; }
+    .plan-featured { border-color: rgba(229,229,229,0.28); }
+    .plan-cloud { border-color: rgba(229,229,229,0.22); }
+    .plan-name { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+    .plan-tag { color: var(--text-muted); font-family: var(--mono); font-size: 11px; }
+    .plan-price { font-size: 28px; font-weight: 700; letter-spacing: 0; margin-bottom: 4px; }
+    .plan-price small { color: var(--text-muted); font-size: 13px; font-weight: 500; letter-spacing: 0; }
+    .plan-desc { color: var(--text-muted); font-size: 13px; line-height: 1.5; min-height: 40px; margin-bottom: 12px; }
+    .plan ul { color: var(--text); font-size: 13px; line-height: 1.7; padding-left: 18px; margin-bottom: 16px; }
+    .plan-cta { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; min-height: 38px; border-radius: 8px; border: 1px solid var(--border); color: var(--text); text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.15s; }
+    .plan-cta:hover { border-color: var(--accent); background: rgba(59,130,246,0.08); }
+    .plan-cta.primary { color: white; background: var(--accent); border-color: var(--accent); }
+    .plan-cta.primary:hover { background: #2563eb; }
 
     .metrics-bar { display: flex; gap: 16px; justify-content: center; margin: 0 auto 24px; padding: 14px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; max-width: 1000px; font-family: var(--mono); font-size: 12px; flex-wrap: wrap; }
     .metric-item { text-align: center; min-width: 80px; }
@@ -84,6 +104,7 @@
     .bench-table .winner { color: var(--green); font-weight: 700; }
     .bench-table .loser { color: var(--text-muted); }
 
+    @media (max-width: 900px) { .pricing-grid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) { .comparison { grid-template-columns: 1fr; } .hero h1 { font-size: 36px; } }
   </style>
   <script src="../node_modules/marked/lib/marked.umd.js"></script>
@@ -100,8 +121,52 @@
       <span class="badge badge-blue">zero dependencies</span>
       <span class="badge badge-yellow">framework agnostic</span>
       <span class="badge badge-purple">viewport virtualization</span>
+      <span class="badge badge-teal">579 downloads/month</span>
     </div>
   </div>
+
+  <section class="pricing" id="pricing">
+    <div class="pricing-kicker">579 monthly npm downloads before launch</div>
+    <h2>Hosted plans</h2>
+    <p class="pricing-copy">
+      Flowdown stays MIT. Paid plans are for teams that want private model support, hosted previews, or server-side rendering for chat transcripts.
+    </p>
+    <div class="pricing-grid">
+      <article class="plan">
+        <div class="plan-name"><span>Open Source</span><span class="plan-tag">MIT</span></div>
+        <div class="plan-price">Free</div>
+        <p class="plan-desc">The package for apps that render streamed markdown in the browser.</p>
+        <ul>
+          <li>Core and React packages</li>
+          <li>Viewport virtualization</li>
+          <li>Static HTML rendering</li>
+        </ul>
+        <a class="plan-cta" href="https://www.npmjs.com/package/@a5omic/flowdown">Install package</a>
+      </article>
+      <article class="plan plan-featured">
+        <div class="plan-name"><span>Pro</span><span class="plan-tag">private models</span></div>
+        <div class="plan-price">$49<small>/mo</small></div>
+        <p class="plan-desc">Early-access support for teams using private or self-hosted models.</p>
+        <ul>
+          <li>Private model setup</li>
+          <li>Hosted preview links</li>
+          <li>Team API keys and usage logs</li>
+        </ul>
+        <a class="plan-cta primary" href="https://github.com/Atomics-hub/flowdown/issues/new?title=Hosted%20Flowdown%20access">Request Pro</a>
+      </article>
+      <article class="plan plan-cloud">
+        <div class="plan-name"><span>Cloud Render</span><span class="plan-tag">server render</span></div>
+        <div class="plan-price">$199<small>/mo</small></div>
+        <p class="plan-desc">A render API for chat UIs with long transcripts or backend-first flows.</p>
+        <ul>
+          <li>Cloud rendering endpoint</li>
+          <li>Cached transcript HTML</li>
+          <li>Priority integration support</li>
+        </ul>
+        <a class="plan-cta" href="https://github.com/Atomics-hub/flowdown/issues/new?title=Cloud%20Render%20access">Request Cloud Render</a>
+      </article>
+    </div>
+  </section>
 
   <div class="controls">
     <button class="primary" onclick="startStream()">Stream Demo</button>

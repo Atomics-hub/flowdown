@@ -1,0 +1,23 @@
+# Hosted Flowdown
+
+Flowdown stays MIT and local-first. The npm packages are the main product surface today.
+
+Hosted Flowdown is an early-access commercial version for teams that want help running Flowdown around private model streams or server-side chat rendering.
+
+## Plans
+
+| Tier | Price | For | Includes |
+|------|-------|----------|----------|
+| Open Source | Free | Apps that render in the browser | `@a5omic/flowdown`, React wrapper, viewport virtualization, static rendering, MIT license |
+| Pro | $49/mo | Teams using private models | Private model setup, hosted preview links, team API keys, usage logs, integration support |
+| Cloud Render | $199/mo | Chat UIs that need server-side rendering | Render API, cached transcript HTML, longer-conversation support, priority support |
+
+## Why Now
+
+Flowdown has 579 monthly npm downloads before any real launch. Hosted plans are a way to turn that inbound usage into a simple commercial offer without changing the open-source package.
+
+## Request Access
+
+Open a GitHub issue with the title `Hosted Flowdown access` and include the chat UI you are building:
+
+https://github.com/Atomics-hub/flowdown/issues/new?title=Hosted%20Flowdown%20access

@@ -19,6 +19,18 @@ Every AI chat app using `react-markdown` re-parses the **entire conversation** o
 
 Flowdown is **2,146x faster** than marked for streaming the same document.
 
+## Hosted Flowdown
+
+Flowdown stays MIT and local-first. Hosted Flowdown is an early-access commercial version for teams that want help around private model streams or server-side chat rendering.
+
+| Tier | Price | For | Includes |
+|------|-------|----------|----------|
+| Open Source | Free | Apps that render in the browser | Core package, React wrapper, virtualization, static rendering |
+| Pro | $49/mo | Teams using private models | Private model setup, hosted preview links, team API keys, usage logs |
+| Cloud Render | $199/mo | Chat UIs that need server-side rendering | Render API, cached transcript HTML, priority support |
+
+Flowdown has 579 monthly npm downloads before any real launch. See [HOSTED.md](https://github.com/Atomics-hub/flowdown/blob/main/HOSTED.md) to request access.
+
 ## Install
 
 ```bash
