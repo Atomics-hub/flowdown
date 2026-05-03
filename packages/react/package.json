@@ -1,6 +1,6 @@
 {
   "name": "@a5omic/flowdown-react",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "React wrapper for Flowdown — O(1) streaming markdown renderer",
   "type": "module",
   "main": "dist/index.js",
