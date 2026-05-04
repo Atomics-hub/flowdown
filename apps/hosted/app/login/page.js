@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { supportHref } from '@/lib/support'
 
 export default async function Login({ searchParams }) {
   const params = await searchParams
@@ -12,6 +13,7 @@ export default async function Login({ searchParams }) {
         <Link className="brand" href="/">flow<span>down</span> hosted</Link>
         <div className="nav-links">
           <Link href="/">Plans</Link>
+          <a href={supportHref}>Support</a>
         </div>
       </nav>
 

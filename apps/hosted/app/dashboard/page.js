@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { billingForEmail, formatUnixDate } from '@/lib/billing'
 import { getSession } from '@/lib/auth'
 import { maskApiKey } from '@/lib/tenants'
+import { supportHref } from '@/lib/support'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,7 @@ export default async function Dashboard() {
       <nav className="nav">
         <Link className="brand" href="/">flow<span>down</span> hosted</Link>
         <div className="nav-links">
+          <a href={supportHref}>Support</a>
           <form action="/api/auth/logout" method="post">
             <button className="link-button" type="submit">Log out</button>
           </form>
@@ -105,6 +107,7 @@ export default async function Dashboard() {
               <li>Use the billing portal for invoices, cards, and cancellations.</li>
               <li>Use the Cloud Render key immediately after checkout.</li>
               <li>Keep the same checkout email for dashboard access.</li>
+              <li><a href={supportHref}>Email support</a> for private model setup.</li>
             </ul>
           </div>
         </div>

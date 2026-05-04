@@ -24,6 +24,8 @@ https://flowdown-hosted-gejo3xsy3a-uc.a.run.app/
 
 Pro and Cloud Render are still early-access plans. Checkout creates the subscription, then the dashboard opens from the verified Stripe Checkout session. Returning dashboard login is live through `Flowdown <login@a5omic.com>`, and Cloud Render subscriptions automatically receive a render API key in the dashboard.
 
+Support goes to `overboardapps@gmail.com`.
+
 ## Hosted App
 
 The dormant hosted control plane lives in [`apps/hosted`](apps/hosted). It includes:

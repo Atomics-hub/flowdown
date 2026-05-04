@@ -67,7 +67,13 @@ Current Stripe live webhook:
 we_1TT7lo9Vir2Bvf4wNgRDgzR0
 ```
 
-The current deployment uses live Stripe Checkout in the Flowdown Stripe account. After checkout, `/success` can open the buyer dashboard from the verified Checkout Session. Active Cloud Render subscriptions receive a generated `fd_live...` render API key in the dashboard. Returning dashboard login is live through Resend from `Flowdown <login@a5omic.com>`.
+Current Stripe live customer portal configuration:
+
+```text
+bpc_1TTBVf9Vir2Bvf4wmNCtH7Vb
+```
+
+The current deployment uses live Stripe Checkout in the Flowdown Stripe account. After checkout, `/success` can open the buyer dashboard from the verified Checkout Session. Active Cloud Render subscriptions receive a generated `fd_live...` render API key in the dashboard. Returning dashboard login is live through Resend from `Flowdown <login@a5omic.com>`. Support goes to `overboardapps@gmail.com`.
 
 Required production environment variables:
 

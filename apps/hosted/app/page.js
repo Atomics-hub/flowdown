@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { allPlans } from '@/lib/plans'
+import { supportHref } from '@/lib/support'
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
         <div className="nav-links">
           <a href="https://atomics-hub.github.io/flowdown/">Demo</a>
           <Link href="/login">Dashboard</Link>
+          <a href={supportHref}>Support</a>
         </div>
       </nav>
 
