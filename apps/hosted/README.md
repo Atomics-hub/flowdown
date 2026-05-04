@@ -51,7 +51,7 @@ Use Cloud Run as the dormant deployment target. Keep `--min-instances=0` so the 
 Current live deployment:
 
 ```text
-https://flowdown-hosted-gejo3xsy3a-uc.a.run.app
+https://flowdown.a5omic.com
 ```
 
 Current Stripe live prices:

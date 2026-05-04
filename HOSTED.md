@@ -20,7 +20,7 @@ Flowdown has 579 monthly npm downloads before any real launch. Hosted plans are 
 
 Hosted checkout is live at:
 
-https://flowdown-hosted-gejo3xsy3a-uc.a.run.app/
+https://flowdown.a5omic.com/
 
 Pro and Cloud Render are still early-access plans. Checkout creates the subscription, then the dashboard opens from the verified Stripe Checkout session. Returning dashboard login is live through `Flowdown <login@a5omic.com>`, and Cloud Render subscriptions automatically receive a render API key in the dashboard.
 
