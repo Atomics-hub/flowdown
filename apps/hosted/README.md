@@ -67,7 +67,7 @@ Current Stripe live webhook:
 we_1TT7lo9Vir2Bvf4wNgRDgzR0
 ```
 
-The current deployment uses live Stripe Checkout in the Flowdown Stripe account. After checkout, `/success` can open the buyer dashboard from the verified Checkout Session. Active Cloud Render subscriptions receive a generated `fd_live...` render API key in the dashboard.
+The current deployment uses live Stripe Checkout in the Flowdown Stripe account. After checkout, `/success` can open the buyer dashboard from the verified Checkout Session. Active Cloud Render subscriptions receive a generated `fd_live...` render API key in the dashboard. Returning dashboard login is live through Resend from `Flowdown <login@a5omic.com>`.
 
 Required production environment variables:
 
@@ -90,6 +90,8 @@ FLOWDOWN_API_KEY_SECRET=...
 FLOWDOWN_TENANTS_JSON='[{"name":"Acme","email":"buyer@example.com","apiKey":"fd_manual_xxx","plan":"cloud"}]'
 ```
 
+For the live Cloud Run service, Resend is stored in Secret Manager as `flowdown-resend-api-key` and mounted as `RESEND_API_KEY`. Grant the Cloud Run runtime service account `roles/secretmanager.secretAccessor` on that secret before deploying revisions that reference it.
+
 Example deployment:
 
 ```bash
@@ -99,8 +101,8 @@ gcloud run deploy flowdown-hosted \
   --allow-unauthenticated \
   --min-instances 0 \
   --max-instances 3 \
-  --set-env-vars APP_URL=https://SERVICE_URL,NEXT_PUBLIC_APP_URL=https://SERVICE_URL,STRIPE_PRO_PRICE_ID=price_xxx,STRIPE_CLOUD_RENDER_PRICE_ID=price_xxx \
-  --set-secrets AUTH_SECRET=flowdown-auth-secret:latest,STRIPE_SECRET_KEY=flowdown-stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=flowdown-stripe-webhook-secret:latest
+  --set-env-vars APP_URL=https://SERVICE_URL,NEXT_PUBLIC_APP_URL=https://SERVICE_URL,LOGIN_FROM_EMAIL='Flowdown <login@a5omic.com>',STRIPE_PRO_PRICE_ID=price_xxx,STRIPE_CLOUD_RENDER_PRICE_ID=price_xxx \
+  --set-secrets AUTH_SECRET=flowdown-auth-secret:latest,STRIPE_SECRET_KEY=flowdown-stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=flowdown-stripe-webhook-secret:latest,RESEND_API_KEY=flowdown-resend-api-key:latest
 ```
 
 Create a Stripe webhook pointing at:
